@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Photo App</title>
+</head>
+<body>
+    <h1>Photo App</h1>
+    <div id="app">
+        <div v-if="!userRegistered">
+            <h2>Register User</h2>
+            <input v-model="username" placeholder="Username">
+            <input v-model="email" placeholder="Email (optional)">
+            <button @click="registerUser">Register</button>
+        </div>
+        <div v-else>
+            <h2>Upload Photo</h2>
+            <input type="file" @change="selectPhoto">
+            <button @click="uploadPhoto">Upload</button>
+            <p>Remaining photos: {{ remaining }}</p>
+            <h2>Your Photos</h2>
+            <ul>
+                <li v-for="photo in photos" :key="photo.ID">
+                    <img :src="photo.URL" width="100">
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+    <script>
+        new Vue({
+            el: '#app',
+            data: {
+                username: '',
+                email: '',
+                userRegistered: false,
+                photos: [],
+                remaining: 25,
+                selectedPhoto: null
+            },
+            methods: {
+                registerUser() {
+                    fetch('/register', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ username: this.username, email: this.email })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.message) {
+                            this.userRegistered = true;
+                            this.fetchPhotos();
+                        } else {
+                            alert(data.error);
+                        }
+                    });
+                },
+                selectPhoto(event) {
+                    this.selectedPhoto = event.target.files[0];
+                },
+                uploadPhoto() {
+                    const formData = new FormData();
+                    formData.append('photo', this.selectedPhoto);
+                    fetch(`/upload/${this.username}`, {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.message) {
+                            this.fetchPhotos();
+                        } else {
+                            alert(data.error);
+                        }
+                    });
+                },
+                fetchPhotos() {
+                    fetch(`/photos/${this.username}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        this.photos = data.photos;
+                        this.remaining = data.remaining;
+                    });
+                }
+            }
+        });
+    </script>
+</body>
+</html>
+
