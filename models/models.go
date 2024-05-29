@@ -32,3 +32,13 @@ type Photo struct {
   URL string
 }
 
+
+func FindUserByUsername(username string) (*User, error) {
+  var user User
+  result := DB.Where("username = ?", username).First(&user)
+  return &user, result.Error
+}
+
+func CreateUser(user *User) error {
+  return DB.Create(user).Error
+}

@@ -33,7 +33,7 @@
             data: {
                 username: '',
                 email: '',
-                userRegistered: false,
+                userRegistered: document.cookie.includes('jwt'),
                 photos: [],
                 remaining: 25,
                 selectedPhoto: null
@@ -63,8 +63,9 @@
                 uploadPhoto() {
                     const formData = new FormData();
                     formData.append('photo', this.selectedPhoto);
-                    fetch(`/upload/${this.username}`, {
+                    fetch('/upload', {
                         method: 'POST',
+                        credentials: 'include', // Ensure cookies are sent
                         body: formData
                     })
                     .then(response => response.json())
@@ -77,12 +78,19 @@
                     });
                 },
                 fetchPhotos() {
-                    fetch(`/photos/${this.username}`)
+                    fetch('/photos', {
+                        credentials: 'include' // Ensure cookies are sent
+                    })
                     .then(response => response.json())
                     .then(data => {
                         this.photos = data.photos;
                         this.remaining = data.remaining;
                     });
+                }
+            },
+            mounted() {
+                if (this.userRegistered) {
+                    this.fetchPhotos();
                 }
             }
         });
